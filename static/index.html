@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Synthetic Data Generator</title>
+    <!-- Include Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Include Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Include Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        neo: {
+                            100: '#E2E8F0',
+                            200: '#94A3B8',
+                            300: '#475569',
+                            400: '#1E293B',
+                            500: '#0F172A',
+                            600: '#020617'
+                        },
+                        accent: {
+                            blue: '#60A5FA',
+                            purple: '#A78BFA',
+                            pink: '#F472B6'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+            min-height: 100vh;
+            color: #E2E8F0;
+        }
+        .neo-card {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid rgba(96, 165, 250, 0.1);
+            backdrop-filter: blur(12px);
+        }
+        .neo-input {
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid rgba(96, 165, 250, 0.2);
+            color: #E2E8F0;
+        }
+        .neo-input:focus {
+            border-color: #60A5FA;
+            box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.2);
+            outline: none;
+        }
+        .neo-input option {
+            background: #1E293B;
+            color: #E2E8F0;
+        }
+        .loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-size: 1.2rem;
+            z-index: 1000;
+            backdrop-filter: blur(8px);
+        }
+        .futuristic-border {
+            position: relative;
+            overflow: hidden;
+        }
+        .futuristic-border::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #60A5FA, transparent);
+            animation: borderFlow 3s linear infinite;
+        }
+        @keyframes borderFlow {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(100%); }
+        }
+        .glow-effect {
+            position: relative;
+        }
+        .glow-effect::after {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #60A5FA, #A78BFA, #F472B6);
+            border-radius: inherit;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .glow-effect:hover::after {
+            opacity: 0.3;
+        }
+    </style>
+</head>
+
+<body class="py-8 px-4">
+    <div class="max-w-6xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-12 relative">
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-32 bg-accent-blue opacity-10 rounded-full blur-3xl"></div>
+            <h1 class="text-5xl md:text-6xl font-bold mb-4 bg-gradient-to-r from-accent-blue via-accent-purple to-accent-pink bg-clip-text text-transparent">
+                Synthetic Data Generator
+            </h1>
+            <p class="text-neo-200 text-lg max-w-2xl mx-auto">
+                Generate high-quality synthetic data with advanced customization
+            </p>
+        </div>
+        
+        <!-- Main Form Card -->
+        <div class="neo-card rounded-2xl p-8 backdrop-blur-xl relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-64 h-64 bg-accent-purple opacity-5 rounded-full blur-3xl"></div>
+            
+            <form id="dataForm" class="space-y-8 relative">
+                <!-- Row Count Section -->
+                <div class="neo-card rounded-xl p-6 futuristic-border">
+                    <label class="block text-lg font-semibold mb-3 text-neo-100">
+                        <i class="fas fa-microchip mr-2 text-accent-blue"></i>
+                        Data Volume Configuration
+                    </label>
+                    <div class="flex items-center gap-4">
+                        <input type="number" id="numRows" name="numRows" 
+                            min="1" max="1000000" value="100"
+                            class="flex-1 px-4 py-3 rounded-lg neo-input"
+                            placeholder="Enter number of rows (max: 1,000,000)">
+                        <span class="text-neo-200 text-sm">Max: 1,000,000</span>
+                    </div>
+                </div>
+
+                <!-- Columns Section -->
+                <div class="space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-xl font-semibold text-neo-100">
+                            <i class="fas fa-cube mr-2 text-accent-purple"></i>
+                            Schema Design
+                        </h2>
+                        <button type="button" id="addColumn"
+                            class="px-4 py-2 bg-accent-blue/20 text-accent-blue rounded-lg hover:bg-accent-blue/30 transition-all duration-200 glow-effect flex items-center gap-2">
+                            <i class="fas fa-plus"></i>
+                            Add Column
+                        </button>
+                    </div>
+                    
+                    <div id="columnsContainer" class="space-y-4">
+                        <!-- Column configurations will be added here -->
+                    </div>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit"
+                    class="w-full py-4 bg-gradient-to-r from-accent-blue via-accent-purple to-accent-pink rounded-xl hover:opacity-90 transition-all duration-200 flex items-center justify-center gap-3 text-lg font-semibold glow-effect">
+                    <i class="fas fa-bolt"></i>
+                    Generate Data Matrix
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading hidden">
+        <div class="text-center">
+            <div class="w-16 h-16 relative mb-4">
+                <div class="absolute inset-0 border-2 border-t-accent-blue border-r-accent-purple border-b-accent-pink border-l-transparent rounded-full animate-spin"></div>
+                <div class="absolute inset-2 border-2 border-t-accent-purple border-r-accent-pink border-b-accent-blue border-l-transparent rounded-full animate-spin-slow"></div>
+            </div>
+            <p class="text-xl font-semibold text-neo-100">Synthesizing Data Matrix...</p>
+        </div>
+    </div>
+
+    <script>
+        // Constants
+    const API_URL = '';
+    const DATA_TYPES = [
+        "id",
+        "name", "email", "phone", "address", "company", "job_title",
+        "date", "number", "boolean", "text", "url", "username",
+        "ip_address", "credit_card", "country", "state", "city",
+        "categorized", "range"
+    ];
+
+    // DOM Elements
+    const columnsContainer = document.getElementById('columnsContainer');
+    const addColumnBtn = document.getElementById('addColumn');
+    const form = document.getElementById('dataForm');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+
+    // Column Creation
+    function createColumnConfig() {
+        const columnDiv = document.createElement('div');
+        columnDiv.className = 'neo-card rounded-xl p-6 futuristic-border';
+        columnDiv.innerHTML = `
+            <div class="flex flex-wrap gap-4">
+                <div class="flex-1 min-w-[200px]">
+                    <label class="block text-sm font-medium text-neo-100 mb-2">Matrix Column</label>
+                    <input type="text" placeholder="Enter column identifier" 
+                        class="w-full px-4 py-2.5 rounded-lg neo-input"
+                        required>
+                </div>
+                <div class="flex-1 min-w-[200px]">
+                    <label class="block text-sm font-medium text-neo-100 mb-2">Data Pattern</label>
+                    <select class="w-full px-4 py-2.5 rounded-lg neo-input"
+                        onchange="handleDataTypeChange(this)">
+                        ${DATA_TYPES.map(type => `<option value="${type}">${type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ')}</option>`).join('')}
+                    </select>
+                </div>
+                <div class="additional-fields hidden flex-1 min-w-[200px]">
+                </div>
+                <div class="flex items-end">
+                    <button type="button" 
+                        class="px-4 py-2.5 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30 transition-all duration-200"
+                        onclick="removeColumn(this)">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        return columnDiv;
+    }
+
+    function handleIdFormatChange(select) {
+        const container = select.closest('.additional-fields');
+        const prefixInput = container.querySelector('[name="prefix"]').parentElement;
+        const lengthInput = container.querySelector('[name="length"]').parentElement;
+
+        if (select.value === 'sequential') {
+            prefixInput.classList.remove('hidden');
+            lengthInput.classList.add('hidden');
+        } else if (select.value === 'hash') {
+            prefixInput.classList.add('hidden');
+            lengthInput.classList.remove('hidden');
+        } else { // uuid
+            prefixInput.classList.add('hidden');
+            lengthInput.classList.add('hidden');
+        }
+    }
+
+    function handleDataTypeChange(select) {
+        const additionalFields = select.closest('.flex').querySelector('.additional-fields');
+        additionalFields.innerHTML = '';
+        additionalFields.className = 'additional-fields flex-1 min-w-[200px]';
+
+        if (select.value === 'id') {
+            additionalFields.innerHTML = `
+                <label class="block text-sm font-medium text-neo-100 mb-2">ID Configuration</label>
+                <div class="space-y-3">
+                    <select class="w-full px-4 py-2.5 rounded-lg neo-input" 
+                        name="id_format" 
+                        onchange="handleIdFormatChange(this)">
+                        <option value="sequential">Sequential (000001)</option>
+                        <option value="uuid">UUID</option>
+                        <option value="hash">Hash</option>
+                    </select>
+                    <div class="flex gap-2">
+                        <input type="text" placeholder="Prefix (optional)" 
+                            class="w-full px-4 py-2.5 rounded-lg neo-input"
+                            name="prefix">
+                    </div>
+                    <div class="flex gap-2 hidden">
+                        <input type="number" placeholder="Hash Length (1-32)" 
+                            class="w-full px-4 py-2.5 rounded-lg neo-input"
+                            name="length" min="1" max="32" value="8">
+                    </div>
+                </div>
+            `;
+            additionalFields.classList.remove('hidden');
+        } else if (select.value === 'categorized') {
+            additionalFields.innerHTML = `
+                <label class="block text-sm font-medium text-neo-100 mb-2">Category Matrix</label>
+                <input type="text" placeholder="Value1, Value2, Value3" 
+                    class="w-full px-4 py-2.5 rounded-lg neo-input"
+                    required>
+            `;
+            additionalFields.classList.remove('hidden');
+        } else if (select.value === 'range') {
+            additionalFields.innerHTML = `
+                <label class="block text-sm font-medium text-neo-100 mb-2">Numerical Bounds</label>
+                <div class="flex gap-2">
+                    <input type="number" placeholder="Lower" 
+                        class="w-1/2 px-4 py-2.5 rounded-lg neo-input"
+                        required>
+                    <input type="number" placeholder="Upper" 
+                        class="w-1/2 px-4 py-2.5 rounded-lg neo-input"
+                        required>
+                </div>
+            `;
+            additionalFields.classList.remove('hidden');
+        } else {
+            additionalFields.classList.add('hidden');
+        }
+    }
+
+    // Remove Column
+    function removeColumn(button) {
+        button.closest('.neo-card').remove();
+    }
+
+    // Get Form Data
+    function getFormData() {
+        const columns = columnsContainer.children;
+        const columnsConfig = [];
+
+        for (const column of columns) {
+            const inputs = column.getElementsByTagName('input');
+            const selects = column.getElementsByTagName('select');
+            const config = {
+                column_name: inputs[0].value,
+                data_type: selects[0].value
+            };
+
+            if (config.data_type === 'id') {
+                const additionalFields = column.querySelector('.additional-fields');
+                const idFormat = additionalFields.querySelector('[name="id_format"]').value;
+                const prefix = additionalFields.querySelector('[name="prefix"]').value;
+                const lengthInput = additionalFields.querySelector('[name="length"]');
+                
+                config.id_format = idFormat;
+                if (prefix.trim()) config.prefix = prefix;
+                if (idFormat === 'hash' && lengthInput.value) {
+                    config.length = parseInt(lengthInput.value);
+                }
+            }
+            else if (config.data_type === 'categorized') {
+                const categoryInput = column.querySelector('.additional-fields input');
+                config.category_values = categoryInput.value.split(',').map(v => v.trim());
+            }
+            else if (config.data_type === 'range') {
+                const rangeInputs = column.querySelectorAll('.additional-fields input');
+                config.range_start = parseFloat(rangeInputs[0].value);
+                config.range_end = parseFloat(rangeInputs[1].value);
+            }
+
+            columnsConfig.push(config);
+        }
+
+        return {
+            columns_config: columnsConfig,
+            num_rows: parseInt(document.getElementById('numRows').value)
+        };
+    }
+
+    // Handle Form Submit
+    async function handleSubmit(event) {
+        event.preventDefault();
+        loadingOverlay.classList.remove('hidden');
+
+        try {
+            const formData = getFormData();
+            console.log('Sending data:', formData); // For debugging
+
+            const response = await fetch(`${API_URL}/generate-data`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.detail || 'Failed to generate data');
+            }
+
+            const contentDisposition = response.headers.get('Content-Disposition');
+            const filenameMatch = contentDisposition && contentDisposition.match(/filename=(.+)/);
+            const filename = filenameMatch ? filenameMatch[1] : 'synthetic_data.csv';
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            a.remove();
+
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error generating data: ' + error.message);
+        } finally {
+            loadingOverlay.classList.add('hidden');
+        }
+    }
+
+    // Form Validation
+    function validateForm() {
+        const columns = columnsContainer.children;
+        if (columns.length === 0) {
+            alert('Please add at least one column');
+            return false;
+        }
+        return true;
+    }
+
+    // Event Listeners
+    addColumnBtn.addEventListener('click', () => {
+        columnsContainer.appendChild(createColumnConfig());
+    });
+
+    form.addEventListener('submit', async (event) => {
+        if (validateForm()) {
+            await handleSubmit(event);
+        } else {
+            event.preventDefault();
+        }
+    });
+
+    // Initialize with one column
+    addColumnBtn.click();
+</script>
